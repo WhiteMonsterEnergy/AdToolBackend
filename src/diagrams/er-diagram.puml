@@ -1,0 +1,28 @@
+@startuml
+
+entity User {
+  * user_id : INT <<PK>>
+  email : VARCHAR
+  password_hash : VARCHAR
+  name : VARCHAR
+  role : VARCHAR
+  created_at : DATETIME
+}
+
+entity Ad {
+  * ad_id : INT <<PK>>
+  title : VARCHAR
+  product_name : VARCHAR
+  target_channel : VARCHAR
+  target_audience : TEXT
+  input_notes : TEXT
+  generated_headline : TEXT
+  generated_caption : TEXT
+  created_at : DATETIME
+  updated_at : DATETIME
+  user_id : INT <<FK>>
+}
+
+User ||--o{ Ad
+
+@enduml
