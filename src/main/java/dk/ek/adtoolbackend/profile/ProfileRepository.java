@@ -1,6 +1,9 @@
-/* this repository does the following:
-Basic CRUD functions from JPARepository
-Custom query to find profile by name (used for login)
+/*
+as a Repository class, it handles the database operations by working in between the Controller and the database.
+technically part of the model layer in the MVC structure.
+does the following:
+- basic CRUD functions from JPARepository
+- custom query to find profile by name (used for login)
 */
 
 
