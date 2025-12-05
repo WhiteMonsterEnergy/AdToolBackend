@@ -9,6 +9,8 @@ this keeps the controller and repository layers clean
 package dk.ek.adtoolbackend.profile;
 
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 
 @Service
 public class ProfileService {
@@ -22,7 +24,12 @@ public Profile createProfile(Profile profile) {
 
     if (profileRepository.findByName(profile.getName()).isPresent()) {
         return null;
-    } else {return profileRepository.save(profile);}
+    } else {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String hashedPassword = encoder.encode(profile.getPasswordHash());
+        profile.setPasswordHash(hashedPassword);
+       System.out.println("hashedPassword: " + hashedPassword);
+        return profileRepository.save(profile);}
 }
 
 }
