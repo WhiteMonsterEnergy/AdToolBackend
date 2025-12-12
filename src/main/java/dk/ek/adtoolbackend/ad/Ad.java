@@ -11,21 +11,18 @@ public class Ad {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /* --- Added for US3 --- */
+    /* Profile-based ownership */
+    @Column(name = "profile_id")
+    private int profileId;
 
-    // (User ID) the owner of this ad
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
-
-    // (Image reference) where the generated image is stored (path or URL)
-    @Column(name = "image_ref", nullable = false)
+    /* Generated image reference (URL or path) */
+    @Column(name = "image_ref")
     private String imageRef;
 
-    // (Created date) when this ad was created
-    @Column(name = "created_at", nullable = false, updatable = false)
+    /* Creation timestamp */
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    /* --- Lifecycle hooks for createdAt --- */
     @PrePersist
     protected void onCreate() {
         if (this.createdAt == null) {
@@ -33,19 +30,17 @@ public class Ad {
         }
     }
 
-    /* --- Constructors --- */
     public Ad() {}
 
-    public Ad(Long userId, String imageRef) {
-        this.userId = userId;
+    public Ad(int profileId, String imageRef) {
+        this.profileId = profileId;
         this.imageRef = imageRef;
     }
 
-    /* --- Getters & Setters --- */
     public Long getId() { return id; }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public int getProfileId() { return profileId; }
+    public void setProfileId(int profileId) { this.profileId = profileId; }
 
     public String getImageRef() { return imageRef; }
     public void setImageRef(String imageRef) { this.imageRef = imageRef; }
