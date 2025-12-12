@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/ads")
+@RequestMapping("api/ads")
 public class AdController {
 
     private final AdService adService;
@@ -17,37 +17,50 @@ public class AdController {
         this.adService = adService;
     }
 
-    /**
-     * POST /ads
-     * Saves a generated ad (stores imageRef + userId + createdAt).
-     * Assumes user id is provided via X-User-Id header (temporary stand-in for auth).
-     */
     @PostMapping
     public ResponseEntity<?> createAd(
-            @RequestHeader(value = "X-User-Id", required = false) Long userId,
+            @RequestHeader(value = "X-Profile-Id", required = false) Integer profileId,
             @RequestBody CreateAdRequest request
     ) {
         try {
-            Ad saved = adService.createGeneratedAd(userId, request.getImageRef());
+            if (profileId == null) {
+                return ResponseEntity.badRequest().body("X-Profile-Id header is required");
+            }
+            Ad saved = adService.saveAdForProfile(profileId, request.getImageRef());
 
             AdResponse body = new AdResponse(
                     saved.getId(),
-                    saved.getUserId(),
+                    saved.getProfileId(),
                     saved.getImageRef(),
                     saved.getCreatedAt()
             );
-
             HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.LOCATION, "/ads/" + saved.getId());
+            headers.add(HttpHeaders.LOCATION, "api/ads/" + saved.getId());
             return new ResponseEntity<>(body, headers, HttpStatus.CREATED);
 
         } catch (IllegalArgumentException ex) {
-            // Bad input (e.g., missing header or imageRef)
             return ResponseEntity.badRequest().body(ex.getMessage());
         } catch (Exception ex) {
-            // Unexpected failure
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to save generated ad.");
         }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteAd(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Profile-Id", required = false) Integer profileId
+    ) {
+        if (profileId == null) {
+            return ResponseEntity.badRequest().body("X-Profile-Id header is required");
+        }
+
+        boolean deleted = adService.deleteAd(id, profileId);
+
+        if (!deleted) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.noContent().build();
     }
 }

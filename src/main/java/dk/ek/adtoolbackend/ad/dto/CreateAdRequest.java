@@ -1,7 +1,6 @@
 package dk.ek.adtoolbackend.ad.dto;
 
 public class CreateAdRequest {
-    // Reference to already-generated image (URL or file path)
     private String imageRef;
 
     public CreateAdRequest() {}
