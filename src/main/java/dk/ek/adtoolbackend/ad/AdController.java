@@ -2,18 +2,25 @@ package dk.ek.adtoolbackend.ad;
 
 import dk.ek.adtoolbackend.ad.dto.AdResponse;
 import dk.ek.adtoolbackend.ad.dto.CreateAdRequest;
+import dk.ek.adtoolbackend.ai.AiService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static org.springframework.http.ResponseEntity.ok;
+
 @RestController
+@CrossOrigin
 @RequestMapping("api/ads")
 public class AdController {
 
     private final AdService adService;
+    private final AiService aiService;
 
-    public AdController(AdService adService) {
+    public AdController(AdService adService, AiService aiService) {
+        this.aiService = aiService;
         this.adService = adService;
     }
 
@@ -63,4 +70,17 @@ public class AdController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping
+    public ResponseEntity<String> healthCheck() {
+        adService.ai();
+        return ResponseEntity.ok("AdController is up and running!");
+    }
+
+    @GetMapping(value = "/ai/image", produces = MediaType.IMAGE_PNG_VALUE)
+    public byte[] image(@RequestParam String prompt) {
+        String prompt1 = "A picturesque view of a mountain landscape during sunrise, with vibrant colors and a clear sky.";
+        return aiService.generateImage(prompt);
+    }
+
 }
