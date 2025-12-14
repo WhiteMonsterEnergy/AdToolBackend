@@ -1,10 +1,11 @@
 package dk.ek.adtoolbackend.ai;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.ek.adtoolbackend.ai.dto.ChatCompletionRequest;
 import dk.ek.adtoolbackend.ai.dto.ChatCompletionResponse;
-import dk.ek.adtoolbackend.ai.dto.MyResponse;
 import dk.ek.adtoolbackend.ai.dto.ImageGenerationRequest;
 import dk.ek.adtoolbackend.ai.dto.ImageGenerationResponse;
+import dk.ek.adtoolbackend.ai.dto.MyResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,14 +28,19 @@ public class AiService {
     private static final Logger log = LoggerFactory.getLogger(AiService.class);
 
     @Value("${app.api-key}") private String apiKey;
-
-    // Denne bruger du til chat (samme som nu)
     @Value("${app.url}")     private String chatUrl;
-
     @Value("${app.model}")   private String model;
     @Value("${app.temperature}") private double temperature;
 
-    private final WebClient client = WebClient.create();
+    private final WebClient client = WebClient.builder()
+            .exchangeStrategies(
+                    ExchangeStrategies.builder()
+                            .codecs(c -> c.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)) // 10 MB
+                            .build()
+            )
+            .build();
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public MyResponse makeRequest(String userPrompt, String systemMessage) {
         try {
@@ -70,8 +77,93 @@ public class AiService {
     }
 
     /**
+     * Bygger en "ad-template" prompt, så du får brand + trust + modelinfo med i billedet.
+     * Hold den her samlet ét sted, så du nemt kan tweake layout senere.
+     */
+    public String buildAdImagePrompt(
+            String brand,
+            String headline,
+            String subline,
+            String discountText,
+            String trustText,
+            String modelInfo
+    ) {
+        // headline kan komme ind med \n fra frontend – vi vil faktisk gerne have line breaks i prompten
+        String safeBrand = brand == null ? "" : brand.trim();
+        String safeHeadline = headline == null ? "" : headline.trim();
+        String safeSubline = subline == null ? "" : subline.trim();
+        String safeDiscount = discountText == null ? "" : discountText.trim();
+        String safeTrust = trustText == null ? "" : trustText.trim();
+        String safeModelInfo = modelInfo == null ? "" : modelInfo.trim();
+
+        return """
+                Create a high-quality fashion advertisement image for women aged 18–30.
+
+                Branding:
+                - Display the brand name "%s" clearly in the top-right corner
+                - Use a clean, modern sans-serif font for the brand name
+
+                Main headline text (large, bold, uppercase, left-aligned):
+                "%s"
+
+                Subline text (smaller, italic or script-style font, under the headline):
+                "%s"
+
+                Discount badge:
+                - A solid red or dark pink rectangular badge
+                - White bold text inside the badge:
+                "%s"
+
+                Trustpilot rating:
+                - Include a small Trustpilot-style rating element near the bottom
+                - Show green stars and the text:
+                "%s"
+
+                Model information:
+                - Add a subtle caption bar at the bottom of the image
+                - Text:
+                "%s"
+
+                Visual style:
+                - Pink and red color palette
+                - Modern, clean fashion advertisement
+                - Confident young woman as the model
+                - Studio lighting, soft shadows
+                - Instagram / webshop promotional style
+                - High-end e-commerce look
+
+                Composition:
+                - Balanced layout with text on the left and model on the right
+                - Clear visual hierarchy: headline → discount → brand → trust elements
+                """.formatted(
+                safeBrand,
+                safeHeadline,
+                safeSubline,
+                safeDiscount,
+                safeTrust,
+                safeModelInfo
+        );
+    }
+
+    /**
+     * Convenience-metode: bygger prompt ud fra dine felter og genererer billed-bytes.
+     * Den her er nice at kalde fra controlleren.
+     */
+    public byte[] generateAdImage(
+            String brand,
+            String headline,
+            String subline,
+            String discountText,
+            String trustText,
+            String modelInfo
+    ) {
+        String prompt = buildAdImagePrompt(brand, headline, subline, discountText, trustText, modelInfo);
+        log.info("Generating ad image with prompt length: {}", prompt.length());
+        return generateImage(prompt);
+    }
+
+    /**
      * Genererer et billede og returnerer rå PNG-bytes.
-     * Tip: returnér dem direkte fra en controller med produces = IMAGE_PNG_VALUE
      */
     public byte[] generateImage(String prompt) {
         try {
@@ -82,32 +174,35 @@ public class AiService {
             req.setN(1);
             req.setOutputFormat("png");
 
-            ImageGenerationResponse response = client.post()
-                    .uri(new URI("https://api.openai.com/v1/images/generations"))
+            String raw = client.post()
+                    .uri("https://api.openai.com/v1/images/generations")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
                     .bodyValue(req)
                     .retrieve()
-                    .bodyToMono(ImageGenerationResponse.class)
+                    .bodyToMono(String.class)
                     .block();
 
-            if (response == null || response.getData() == null || response.getData().isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Empty image response from OpenAI");
+            if (raw == null || raw.isBlank()) {
+                throw new IllegalStateException("OpenAI returned 200 but empty body");
             }
 
-            String b64 = response.getData().get(0).getB64Json();
-            return Base64.getDecoder().decode(b64);
+            ImageGenerationResponse response = objectMapper.readValue(raw, ImageGenerationResponse.class);
+
+            if (response.getData() == null || response.getData().isEmpty()
+                    || response.getData().get(0).getB64Json() == null) {
+                throw new IllegalStateException("OpenAI returned JSON but missing data[0].b64_json");
+            }
+
+            return Base64.getDecoder().decode(response.getData().get(0).getB64Json());
 
         } catch (WebClientResponseException e) {
-            // Den her linje er guld når du debugger 400’ere:
             log.error("OpenAI image error {}: {}", e.getRawStatusCode(), e.getResponseBodyAsString());
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "External AI image call failed. Check logs.");
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "OpenAI image call failed. Check logs.");
         } catch (Exception e) {
             log.error("Unexpected image error", e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error. Check backend logs.");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error. Check logs.");
         }
     }
-
-
 }
