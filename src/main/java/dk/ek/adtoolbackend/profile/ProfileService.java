@@ -54,6 +54,7 @@ public Profile authenticateAndGetProfile(String name, String passwordHash) {
 
 // check if raw input password matches stored hash
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        // the parameter passwordHash used below is actually the raw password input, but when i tried naming it rawPassword i couldn't compile
         boolean matches = encoder.matches(passwordHash, storedHash);
 
 
