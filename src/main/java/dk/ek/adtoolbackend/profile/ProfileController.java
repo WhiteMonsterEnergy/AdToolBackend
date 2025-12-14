@@ -41,5 +41,24 @@ profile = profileService.createProfile(profile);
 
 
     }
+
+
+    @PostMapping("/login")
+    public ResponseEntity<Profile> loginToProfile(@RequestBody Profile profile) {
+
+
+        // ensures that neither the profile object itself, nor name or passwordHash are null
+        if (profile == null || profile.getName() == null || profile.getPasswordHash() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Profile authenticated = profileService.authenticateAndGetProfile(profile.getName(), profile.getPasswordHash());
+        if (authenticated != null){
+            return ResponseEntity.ok(authenticated);
+        } else {
+            return ResponseEntity.status(401).build();
+
+        }
+    }
 }
 
