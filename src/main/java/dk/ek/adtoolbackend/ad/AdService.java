@@ -33,4 +33,8 @@ public class AdService {
         return adRepository.save(ad);
     }
 
+    public void ai() {
+
+    }
+
 }
