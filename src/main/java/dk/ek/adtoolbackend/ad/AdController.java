@@ -56,7 +56,7 @@ public class AdController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("api/{id}")
     public ResponseEntity<?> deleteAd(
             @PathVariable Long id,
             @RequestHeader(value = "X-Profile-Id", required = false) Integer profileId
