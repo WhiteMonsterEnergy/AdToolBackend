@@ -37,6 +37,9 @@ if (profile == null || profile.getName() == null || profile.getPasswordHash() ==
 }
 
 profile = profileService.createProfile(profile);
+        if (profile == null) {
+            return ResponseEntity.badRequest().body(null);
+        }
         return ResponseEntity.ok(profile);
 
 
