@@ -28,9 +28,7 @@ services:
       - adtool-net
 
   frontend:
-    build:
-      context: ghcr.io/whitemonsterenergy/adtoolfrontend2:latest
-    container_name: adtool-frontend
+    image: ghcr.io/whitemonsterenergy/adtoolfrontend2:latest
     ports:
       - "8080:8080"
     depends_on:
