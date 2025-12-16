@@ -38,6 +38,19 @@ CREATE TABLE ad_campaign (
 CREATE INDEX idx_campaign_user_id ON ad_campaign(user_id);
 
 -- -----------------------
+-- ✅ ADS (NY TABEL TIL AT GEMME GENEREREDE ANNONCER/BILLEDER)
+-- -----------------------
+CREATE TABLE ads (
+                     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+                     profile_id  INT NOT NULL,
+                     image_ref   VARCHAR(255),
+                     image_data  LONGBLOB,
+                     created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_ads_profile_id ON ads(profile_id);
+
+-- -----------------------
 -- AUDIENCE SEGMENT
 -- -----------------------
 CREATE TABLE audience_segment (

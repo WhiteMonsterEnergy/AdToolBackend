@@ -12,15 +12,20 @@ public class Ad {
     private Long id;
 
     /* Profile-based ownership */
-    @Column(name = "profile_id")
+    @Column(name = "profile_id", nullable = false)
     private int profileId;
 
-    /* Generated image reference (URL or path) */
+    /* Generated image reference (valgfri – kan bruges senere til fil/URL) */
     @Column(name = "image_ref")
     private String imageRef;
 
+    /* 🔴 SELVE BILLEDET (BLOB) */
+    @Lob
+    @Column(name = "image_data", columnDefinition = "LONGBLOB")
+    private byte[] imageData;
+
     /* Creation timestamp */
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
@@ -37,14 +42,41 @@ public class Ad {
         this.imageRef = imageRef;
     }
 
-    public Long getId() { return id; }
+    /* -------- getters / setters -------- */
 
-    public int getProfileId() { return profileId; }
-    public void setProfileId(int profileId) { this.profileId = profileId; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getImageRef() { return imageRef; }
-    public void setImageRef(String imageRef) { this.imageRef = imageRef; }
+    public int getProfileId() {
+        return profileId;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setProfileId(int profileId) {
+        this.profileId = profileId;
+    }
+
+    public String getImageRef() {
+        return imageRef;
+    }
+
+    public void setImageRef(String imageRef) {
+        this.imageRef = imageRef;
+    }
+
+    public byte[] getImageData() {
+        return imageData;
+    }
+
+    public void setImageData(byte[] imageData) {
+        this.imageData = imageData;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }

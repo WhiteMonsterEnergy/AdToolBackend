@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8
+    container_name: adtool-db
+    environment:
+      MYSQL_DATABASE: adtool
+      MYSQL_USER: adtool
+      MYSQL_PASSWORD: adtool
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - adtool-net
+
+  backend:
+    build:
+      context: .
+    container_name: adtool-backend
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/adtool
+      SPRING_DATASOURCE_USERNAME: adtool
+      SPRING_DATASOURCE_PASSWORD: adtool
+    networks:
+      - adtool-net
+
+  frontend:
+    image: ghcr.io/whitemonsterenergy/adtoolfrontend2:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+    networks:
+      - adtool-net
+
+volumes:
+  db-data:
+
+networks:
+  adtool-net:
