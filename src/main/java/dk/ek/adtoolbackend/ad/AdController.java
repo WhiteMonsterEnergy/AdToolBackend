@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @CrossOrigin
@@ -104,11 +105,11 @@ public class AdController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAdsForProfile(
+    public ResponseEntity<List<AdResponse>> getAdsForProfile(
             @RequestHeader(value = "X-Profile-Id", required = false) Integer profileId
     ) {
         if (profileId == null) {
-            return ResponseEntity.badRequest().body("X-Profile-Id header is required");
+            return ResponseEntity.badRequest().body(List.of());
         }
 
         var ads = adService.getAdsForProfile(profileId);
