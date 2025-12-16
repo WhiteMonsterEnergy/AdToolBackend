@@ -14,7 +14,12 @@ public class JwtService {
     ) {
         this.jwtUtil = new JwtUtil(secret, expirationMs);
     }
+
     public String generateToken(String username) {
         return jwtUtil.generateToken(username);
+    }
+
+    public String validateAndGetUsername(String token) {
+        return jwtUtil.validateAndGetUsername(token);
     }
 }

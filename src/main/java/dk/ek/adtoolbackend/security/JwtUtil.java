@@ -6,6 +6,8 @@ import io.jsonwebtoken.security.Keys;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import io.jsonwebtoken.Claims;
+
 
 public class JwtUtil {
 
@@ -28,5 +30,16 @@ public class JwtUtil {
                 .expiration(expiryDate)
                 .signWith(key)
                 .compact();
+    }
+
+    public String validateAndGetUsername(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.getSubject();
+
     }
 }
