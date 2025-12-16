@@ -33,10 +33,13 @@ public ResponseEntity<Profile> createNewProfile(@RequestBody Profile profile) {
 
         // ensures that neither the profile object itself, nor name or passwordHash are null
 if (profile == null || profile.getName() == null || profile.getPasswordHash() == null) {
-    return ResponseEntity.badRequest().body(null);
+    return ResponseEntity.badRequest().build();
 }
 
 profile = profileService.createProfile(profile);
+if (profile == null) {
+    return ResponseEntity.badRequest().build();
+}
         return ResponseEntity.ok(profile);
 
 
