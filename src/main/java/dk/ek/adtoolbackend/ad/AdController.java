@@ -104,9 +104,27 @@ public class AdController {
     }
 
     @GetMapping
-    public ResponseEntity<String> healthCheck() {
-        return ResponseEntity.ok("AdController is up and running!");
+    public ResponseEntity<?> getAdsForProfile(
+            @RequestHeader(value = "X-Profile-Id", required = false) Integer profileId
+    ) {
+        if (profileId == null) {
+            return ResponseEntity.badRequest().body("X-Profile-Id header is required");
+        }
+
+        var ads = adService.getAdsForProfile(profileId);
+
+        var response = ads.stream()
+                .map(ad -> new AdResponse(
+                        ad.getId(),
+                        ad.getProfileId(),
+                        ad.getImageRef(),
+                        ad.getCreatedAt()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
+
 
     @GetMapping(value = "/ai/image", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> image(
