@@ -1,7 +1,17 @@
-POST http://localhost:8080/api/profile/register
+POST http://localhost:8081/api/profile/register
 Content-Type: application/json
 
 {
   "name": "Alice",
   "passwordHash": "alicepass123"
+}
+
+###
+
+POST http://localhost:8081/api/profile/login
+Content-Type: application/json
+
+{
+    "name": "Alice",
+    "passwordHash": "alicepass123"
 }
