@@ -3,6 +3,7 @@ package dk.ek.adtoolbackend.ad;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -20,6 +21,10 @@ public class AdService {
         }
         Ad ad = new Ad(profileId, imageRef);
         return adRepository.save(ad);
+    }
+
+    public List<Ad> getAdsForProfile(int profileId) {
+        return adRepository.findAllByProfileId(profileId);
     }
 
     public boolean deleteAd(Long adId, int profileId) {
